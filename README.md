@@ -1,4 +1,5 @@
-# jQuery File Upload Plugin
+# jQuery File Upload, Resize and Crop Plugin
+Modified by Agustín Amenabar
 
 ## Demo
 [Demo File Upload](http://blueimp.github.com/jQuery-File-Upload/)

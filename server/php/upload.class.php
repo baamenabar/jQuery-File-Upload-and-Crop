@@ -27,7 +27,7 @@ class UploadHandler
             // take precedence over the following max_file_size setting:
             'max_file_size' => null,
             'min_file_size' => 1,
-            'accept_file_types' => '/.+$/i',
+            'accept_file_types' => '/\.(gif|jpe?g|png)$/i',
             // The maximum number of files for the upload directory:
             'max_number_of_files' => null,
             // Image resolution restrictions:

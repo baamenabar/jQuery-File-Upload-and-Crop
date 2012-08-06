@@ -13,12 +13,14 @@
 class UploadHandler
 {
     protected $options;
+    protected $_relative_upload_dir = '/files/';
 
     function __construct($options=null) {
         $this->options = array(
             'script_url' => $this->getFullUrl().'/',
-            'upload_dir' => dirname($_SERVER['SCRIPT_FILENAME']).'/files/',
-            'upload_url' => $this->getFullUrl().'/files/',
+            'relative_upload_dir' => $this->_relative_upload_dir,
+            'upload_dir' => dirname($_SERVER['SCRIPT_FILENAME']).$this->_relative_upload_dir,
+            'upload_url' => $this->getFullUrl().$this->_relative_upload_dir,
             'param_name' => 'files',
             // Set the following option to 'POST', if your server does not support
             // DELETE requests. This is a parameter sent to the client:
@@ -433,4 +435,11 @@ class UploadHandler
         echo json_encode($success);
     }
 
+    public function getOption($option_name){
+        if(isset($this->options[$option_name])){
+            return $this->options[$option_name];
+        }else{
+            return null;
+        }
+    }
 }

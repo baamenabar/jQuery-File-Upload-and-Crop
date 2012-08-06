@@ -12,6 +12,7 @@
 /*jslint nomen: true, unparam: true, regexp: true */
 /*global $, window, document */
 var $activeImage;
+var cropCoordinates={};
 $(function () {
     'use strict';
 
@@ -90,7 +91,6 @@ $(function () {
         });
         $('#startCrop').click(function(eve){
             eve.preventDefault();
-            //$('#modal-gallery').hide();
             var $cm = $('#croppingModal');
             var cssProperties = Array('margin-left','margin-top','width');
             for (var i = cssProperties.length - 1; i >= 0; i--) {
@@ -100,6 +100,7 @@ $(function () {
             $('#croppingModal').show().find('.close, .closeModal').click(function(){
                 $('#croppingModal').hide();
             });
+            $('#modal-gallery').modal('hide');
             
             var picWidth = $activeImage.width();
             var picHeight = $activeImage.height();
@@ -116,11 +117,28 @@ $(function () {
                 $('#croppingModal').find('h3 .dimentions').text('to '+$cm.attr('data-width') + ' x ' + $cm.attr('data-height') + ' px');
             }
 
+            cropCoordinates.source = {
+                width:picWidth,
+                height:picHeight,
+                file:$activeImage.attr('src')
+            };
+            jcOptions.onSelect = function(c){
+                cropCoordinates.c=c;
+            };
+
             $('#canvasToCrop').Jcrop(jcOptions);
+            $('#btnDoCrop').click(function(eve){
+                $.post('server/php/image_crop_and_size.php',cropCoordinates,afterCropping)
+            });
         });
         
     });
 });
+
+function afterCropping(data,textStatus,jqXHR){
+    //
+}
+
 /*
  * Special event for image load events
  * Needed because some browsers does not trigger the event on cached images.

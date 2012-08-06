@@ -120,6 +120,8 @@ $(function () {
             cropCoordinates.source = {
                 width:picWidth,
                 height:picHeight,
+                endWidth:$cm.attr('data-width'),
+                endHeight:$cm.attr('data-height'),
                 file:$activeImage.attr('src')
             };
             jcOptions.onSelect = function(c){

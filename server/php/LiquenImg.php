@@ -30,30 +30,31 @@ class LiquenImg
 	protected $cacheFolder = 'imgs/';// MUST have trailing slash
 	protected $sourceFolder = 'upload/';// MUST have trailing slash
 	protected $shorthand = array(
-		'u'=>'url',
-		'o'=>'outputFolder',
-		'w'=>'width',
-		'h'=>'height',
-		'p'=>'percent',
-		'b'=>'backgroundColor',
-		'c'=>'crop',//if true enforces cropping
+		'u' =>'url',
+		'o' =>'outputFolder',
+		'rn'=>'rename',
+		'w' =>'width',
+		'h' =>'height',
+		'p' =>'percent',
+		'b' =>'backgroundColor',
+		'c' =>'crop',//if true enforces cropping
 		'ct'=>'cropType',
 		'ft'=>'fileType',
 		'oc'=>'overwriteCached',
-		'i'=>'interlaced',
-		'q'=>'quality',
+		'i' =>'interlaced',
+		'q' =>'quality',
 		'mw'=>'maxWidth',//legacy
 		'mh'=>'maxHeight',//legacy
 		'sq'=>'square',//legacy
 		'ma'=>'max',//maximun side size
 		'mi'=>'min',//minimun side size
-		's'=>'short',//Short side should measure... this is an alias for min
-		'l'=>'long',//Long side should measure... this is an alias for max
+		's' =>'short',//Short side should measure... this is an alias for min
+		'l' =>'long',//Long side should measure... this is an alias for max
 		'cx'=>'cropRectangleX',
 		'cy'=>'cropRectangleY',
 		'cw'=>'cropRectangleWidth',
 		'ch'=>'cropRectangleHeight',
-		'p'=>'padding',//not yet developed
+		'p' =>'padding',//not yet developed
 		'pt'=>'paddingTop',//not yet developed
 		'pr'=>'paddingRight',//not yet developed
 		'pb'=>'paddingBottom',//not yet developed
@@ -63,6 +64,7 @@ class LiquenImg
 	protected $defaults = array(
 		'url'=>NULL,
 		'outputFolder'=>NULL,//re-defines the cacheFolder. Must be relative to instanciation of class.
+		'rename'=>true,//if we want to mantain the name of the file (potentially rewriting it) pass the atribute as 'false'
 		'width'=>0,
 		'height'=>0,
 		'percent'=>100,
@@ -122,8 +124,7 @@ class LiquenImg
 	function __construct(array $dat = NULL)
 	{
 		error_reporting(E_ALL);
-		//$this->getConfig();
-		require "Rectangle.php";
+		$this->getConfig();
 		if($dat!=NULL && count($dat)){
 			$this->options = $dat;
 		}elseif(isset($_GET) && count($_GET) && (isset($_GET['u']) || isset($_GET['url']))){
@@ -160,7 +161,7 @@ class LiquenImg
 		return false;
 	}
 
-	/*protected function getConfig(){
+	protected function getConfig(){
 		if(is_file('../config_liquen.ini')){
 			$config = parse_ini_file('config_liquen.ini');
 			if(!$config)return;
@@ -170,7 +171,7 @@ class LiquenImg
 			if(substr($this->cacheFolder,-1)!='/')$this->cacheFolder.='/';
 			if(substr($this->sourceFolder,-1)!='/')$this->sourceFolder.='/';
 		}
-	}*/
+	}
 
 	protected function init(){
 		//Normalize shorthand parameters
@@ -183,7 +184,7 @@ class LiquenImg
 		//Verify the file exists
 		if(!is_file($this->sourceFolder.$this->options['url'])){
 			/*echo '<br>
-			'.$this->options['url'].'es acrchiveo?'.is_file($this->options['url']).' esta slash en:'.strpos($this->options['url'], '/');//*/
+			'.$this->options['url'].'es acrchivo?'.is_file($this->options['url']).' esta slash en:'.strpos($this->options['url'], '/');//*/
 			if(strpos($this->options['url'], '/') !== false && is_file(''.$this->options['url'])){
 				$this->sourceFolder='';
 			}else{
@@ -202,7 +203,7 @@ class LiquenImg
 
 		//if set verify output folder.
 		if (isset($this->options['outputFolder']) && $this->options['outputFolder']) {
-			if(is_dir($this->options['outputFolder'])){
+			if( is_dir($this->options['outputFolder']) ){
 				if(substr($this->options['outputFolder'],-1)!='/')$this->options['outputFolder'].='/';
 				$this->cacheFolder = $this->options['outputFolder'];
 			}
@@ -210,11 +211,16 @@ class LiquenImg
 
 		//build cache name and check if already on cache
 		$this->cachedFile=array();
-		foreach ($this->shorthand as $key => $value){
-			if($key == 'u'){
-				$this->cachedFile[] = $name;
-			}elseif (isset($this->options[$value]) && $key!='oc' && $key!='o') {
-				$this->cachedFile[]=$key.$this->options[$value];
+		if( isset($this->options['rename']) && $this->options['rename'] === 'false' ){// if we want to mantain the name of the file (potentially rewriting it)
+			$name_no_extension = explode('.', $name);
+			$this->cachedFile[]=array_splice($name_no_extension, -1);//remove the extension
+		} else{
+			foreach ($this->shorthand as $key => $value){
+				if($key == 'u'){
+					$this->cachedFile[] = $name;
+				}elseif (isset($this->options[$value]) && $key!='oc' && $key!='o') {
+					$this->cachedFile[]=$key.$this->options[$value];
+				}
 			}
 		}
 		$this->cachedFile = $this->cacheFolder.implode('_', $this->cachedFile).'.'.$this->extension;
@@ -230,6 +236,7 @@ class LiquenImg
 
 		//set defaults
 		if(isset($this->options['crop']) && $this->options['crop']==='false')$this->options['crop']=0;
+		if(isset($this->options['rename']) && $this->options['rename']==='false')$this->options['rename']=false;
 		if(isset($this->options['short']) && !isset($this->options['min']))$this->options['min'] = $this->options['short'];
 		if(isset($this->options['long']) && !isset($this->options['max']))$this->options['max'] = $this->options['long'];
 		foreach ($this->defaults as $key => $value)if( !isset( $this->options[$key] ) )$this->options[$key]=$value;

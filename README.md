@@ -1,5 +1,6 @@
 # jQuery File Upload, Resize and Crop Plugin
 Modified by Agustín Amenabar
+__Modified == Hacked__
 
 ## Demo
 [Demo File Upload](http://blueimp.github.com/jQuery-File-Upload/)

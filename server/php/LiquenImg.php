@@ -29,6 +29,9 @@ class LiquenImg
 {
 	protected $cacheFolder = 'imgs/';// MUST have trailing slash
 	protected $sourceFolder = 'upload/';// MUST have trailing slash
+	protected $_errors=array();
+	protected $_notices=array();
+
 	protected $shorthand = array(
 		'u' =>'url',
 		'o' =>'outputFolder',
@@ -100,26 +103,29 @@ class LiquenImg
 		);
 	protected $options;
 
-	protected $extension = 'jpg';
-	protected $width;
-	protected $height;
-	protected $srcX = 0;
-	protected $srcY = 0;
-	protected $srcWidth;
-	protected $srcHeight;
-	protected $cRectangle=false;
+	protected $configsDefaults = array(
+	'extension' => 'jpg',
+	'width' => 0,
+	'height' => 0,
+	'srcX' => 0,
+	'srcY' => 0,
+	'srcWidth' => 0,
+	'srcHeight' => 0,
+	'cRectangle' => false,
 
-	protected $endX = 0;
-	protected $endY = 0;
-	protected $endWidth;
-	protected $endHeight;
-	protected $dst_width;
-	protected $dst_height;
+	'endX' => 0,
+	'endY' => 0,
+	'endWidth' => 0,
+	'endHeight' => 0,
+	'dst_width' => 0,
+	'dst_height' => 0,
+	'quality' => 0,
+	'interlace' => 0,
+	'background' => 0,
+	'srcImage' => 0
+	);
 	protected $cachedFile;
-	protected $quality;
-	protected $interlace;
-	protected $background;
-	protected $srcImage;
+	protected $configs;
 
 	function __construct(array $dat = NULL)
 	{
@@ -140,6 +146,7 @@ class LiquenImg
 	public function getSourceFolder(){return $this->sourceFolder;}
 
 	public function genImage(array $dat, $absoluteURL=false){
+		$this->configs = $this->configsDefaults;//resets configs
 		if(isset($dat) && count($dat)){
 			$this->options = $dat;
 		}else{
@@ -162,7 +169,7 @@ class LiquenImg
 	}
 
 	protected function getConfig(){
-		if(is_file('../config_liquen.ini')){
+		if(is_file('config_liquen.ini')){
 			$config = parse_ini_file('config_liquen.ini');
 			if(!$config)return;
 			if(isset($config['cacheFolder']) && $config['cacheFolder'])		$this->cacheFolder	=	$config['cacheFolder'];
@@ -195,7 +202,7 @@ class LiquenImg
 		}
 
 		//define output extension
-		if( isset($this->options['fileType']) )$this->extension = $this->fileTypesShorthand[substr($this->options['fileType'], 0, 1)];
+		if( isset($this->options['fileType']) )$this->configs['extension'] = $this->fileTypesShorthand[substr($this->options['fileType'], 0, 1)];
 
 		//Get name of file
 		$name = explode( "/" , $this->options['url'] );
@@ -211,27 +218,28 @@ class LiquenImg
 
 		//build cache name and check if already on cache
 		$this->cachedFile=array();
-		if( isset($this->options['rename']) && $this->options['rename'] === 'false' ){// if we want to mantain the name of the file (potentially rewriting it)
+		if( isset($this->options['rename']) && ( $this->options['rename'] === 'false' || !$this->options['rename'] ) ){// if we want to mantain the name of the file (potentially rewriting it)
 			$name_no_extension = explode('.', $name);
-			$this->cachedFile[]=array_splice($name_no_extension, -1);//remove the extension
+			array_splice($name_no_extension, -1);//remove the src extension
+			$this->cachedFile[]=implode('.', $name_no_extension);
 		} else{
 			foreach ($this->shorthand as $key => $value){
 				if($key == 'u'){
 					$this->cachedFile[] = $name;
-				}elseif (isset($this->options[$value]) && $key!='oc' && $key!='o') {
+				}elseif (isset($this->options[$value]) && $key!='oc' && $key!='o' && $key!='rn') {
 					$this->cachedFile[]=$key.$this->options[$value];
 				}
 			}
 		}
-		$this->cachedFile = $this->cacheFolder.implode('_', $this->cachedFile).'.'.$this->extension;
+		$this->cachedFile = $this->cacheFolder.implode('_', $this->cachedFile).'.'.$this->configs['extension'];
 		if(is_file($this->cachedFile) && (!isset($this->options['overwriteCached']) || !$this->options['overwriteCached'])){
 			return $this->cachedFile;
 		}
 
 		//Size and type of the file
 		$dimentionsAndTYpe = getimagesize( $this->sourceFolder.$this->options['url'] );
-		$this->width = $dimentionsAndTYpe[0];
-		$this->height = $dimentionsAndTYpe[1];
+		$this->configs['width'] = $dimentionsAndTYpe[0];
+		$this->configs['height'] = $dimentionsAndTYpe[1];
 		$type = image_type_to_mime_type($dimentionsAndTYpe[2]);
 
 		//set defaults
@@ -266,26 +274,26 @@ class LiquenImg
 
 		//cropping Rectangle
 		if( $this->options['cropRectangleWidth']>0 ){
-			$this->cRectangle = new stdClass();
-			$this->cRectangle->x = $this->options['cropRectangleX'];
-			$this->cRectangle->y = $this->options['cropRectangleY'];
-			$this->cRectangle->width = $this->options['cropRectangleWidth'];
-			$this->cRectangle->height = $this->options['cropRectangleHeight'];
+			$this->configs['cRectangle'] = new stdClass();
+			$this->configs['cRectangle']->x = $this->options['cropRectangleX'];
+			$this->configs['cRectangle']->y = $this->options['cropRectangleY'];
+			$this->configs['cRectangle']->width = $this->options['cropRectangleWidth'];
+			$this->configs['cRectangle']->height = $this->options['cropRectangleHeight'];
 		}
 
 			
 		//origin point
-		$currentAspectRatio = $this->width / $this->height;
+		$currentAspectRatio = $this->configs['width'] / $this->configs['height'];
 
 		//Make a Square
 		if($this->options['square'])
 		{
-			$this->endWidth = $this->options['square'];
-			$this->endHeight = $this->options['square'];
-			if( $this->width >= $this->height ){
-				$this->width = $this->height;//here the crop is defined
+			$this->configs['endWidth'] = $this->options['square'];
+			$this->configs['endHeight'] = $this->options['square'];
+			if( $this->configs['width'] >= $this->configs['height'] ){
+				$this->configs['width'] = $this->configs['height'];//here the crop is defined
 			}else{
-				$this->height = $this->width;
+				$this->configs['height'] = $this->configs['width'];
 			}
 				
 		}
@@ -293,22 +301,22 @@ class LiquenImg
 		//Percent Change
 		elseif( $this->options['percent'] != 100 )
 		{
-			$this->endWidth = ( $this->options['percent'] / 100 ) * $this->width;
-			$this->endHeight = ( $this->options['percent'] / 100 ) * $this->height;
+			$this->configs['endWidth'] = ( $this->options['percent'] / 100 ) * $this->configs['width'];
+			$this->configs['endHeight'] = ( $this->options['percent'] / 100 ) * $this->configs['height'];
 		}
 
 		//Width change
 		elseif(  $this->options['width'] && !$this->options['height'] )
 		{
-			$this->endWidth = $this->options['width'];
-			$this->endHeight = ( $this->height * $this->endWidth ) / $this->width;
+			$this->configs['endWidth'] = $this->options['width'];
+			$this->configs['endHeight'] = ( $this->configs['height'] * $this->configs['endWidth'] ) / $this->configs['width'];
 		}
 
 		//Height change
 		elseif(  $this->options['height'] && !$this->options['width'] )
 		{
-			$this->endHeight = $this->options['height'];
-			$this->endWidth = ( $this->width * $this->endHeight ) / $this->height;
+			$this->configs['endHeight'] = $this->options['height'];
+			$this->configs['endWidth'] = ( $this->configs['width'] * $this->configs['endHeight'] ) / $this->configs['height'];
 		}
 
 		//defines a limit for both width AND height without cropping
@@ -316,58 +324,58 @@ class LiquenImg
 		{
 			$newAspectRatio = $this->options['maxWidth'] / $this->options['maxHeight'];
 			if( $newAspectRatio < $currentAspectRatio ){
-				$this->endWidth = $this->options['maxWidth'];
-				$this->endHeight = $this->endWidth / $currentAspectRatio;
+				$this->configs['endWidth'] = $this->options['maxWidth'];
+				$this->configs['endHeight'] = $this->configs['endWidth'] / $currentAspectRatio;
 			}else{
-				$this->endHeight = $this->options['maxHeight'];
-				$this->endWidth = $this->endHeight * $currentAspectRatio;
+				$this->configs['endHeight'] = $this->options['maxHeight'];
+				$this->configs['endWidth'] = $this->configs['endHeight'] * $currentAspectRatio;
 			}
 		}
 		//set the length for the longest side
 		elseif ( $this->options['max'] ) {
-			if ($this->height > $this->width) {
-				$this->endHeight = $this->options['max'];
-				$this->endWidth = $this->endHeight * $currentAspectRatio;
+			if ($this->configs['height'] > $this->configs['width']) {
+				$this->configs['endHeight'] = $this->options['max'];
+				$this->configs['endWidth'] = $this->configs['endHeight'] * $currentAspectRatio;
 			} else {
-				$this->endWidth = $this->options['max'];
-				$this->endHeight = $this->endWidth / $currentAspectRatio;
+				$this->configs['endWidth'] = $this->options['max'];
+				$this->configs['endHeight'] = $this->configs['endWidth'] / $currentAspectRatio;
 			}
 			
 		}
 		//set the length for the shortest side
 		elseif ( $this->options['min'] ) {
-			if ($this->height < $this->width) {
-				$this->endHeight = $this->options['min'];
-				$this->endWidth = $this->endHeight * $currentAspectRatio;
+			if ($this->configs['height'] < $this->configs['width']) {
+				$this->configs['endHeight'] = $this->options['min'];
+				$this->configs['endWidth'] = $this->configs['endHeight'] * $currentAspectRatio;
 			} else {
-				$this->endWidth = $this->options['min'];
-				$this->endHeight = $this->endWidth / $currentAspectRatio;
+				$this->configs['endWidth'] = $this->options['min'];
+				$this->configs['endHeight'] = $this->configs['endWidth'] / $currentAspectRatio;
 			}
 		}
 		//Width AND height change with probable cropping
 		elseif(  $this->options['height'] && $this->options['width'] ){
-			$this->endHeight = $this->options['height'];
-			$this->endWidth = $this->options['width'];
+			$this->configs['endHeight'] = $this->options['height'];
+			$this->configs['endWidth'] = $this->options['width'];
 		}
 		// Cropping rectangle
-		else if( $this->cRectangle ){
-			$this->endHeight = $this->cRectangle->height;
-			$this->endWidth = $this->cRectangle->width;
+		else if( $this->configs['cRectangle'] ){
+			$this->configs['endHeight'] = $this->configs['cRectangle']->height;
+			$this->configs['endWidth'] = $this->configs['cRectangle']->width;
 		}else{
 			return false;
 		}
-		$newAspectRatio = $this->endWidth / $this->endHeight;
+		$newAspectRatio = $this->configs['endWidth'] / $this->configs['endHeight'];
 		if (floor($newAspectRatio*1000000) == floor($currentAspectRatio*1000000)) {//if aspect ratios are approximately the same: crop from top-left
 			$this->options['cropType']='tl';
 		}
 
-		$this->srcWidth=$this->width;
-		$this->srcHeight=$this->height;
+		$this->configs['srcWidth']=$this->configs['width'];
+		$this->configs['srcHeight']=$this->configs['height'];
 
-		$this->dst_width=$this->endWidth;
-		$this->dst_height=$this->endHeight;
+		$this->configs['dst_width']=$this->configs['endWidth'];
+		$this->configs['dst_height']=$this->configs['endHeight'];
 		
-		if (!$this->cRectangle) {
+		if (!$this->configs['cRectangle']) {
 			//calculate the origin point according to the crop type
 			if($this->options['crop']){
 				if(strlen($this->options['cropType'])!=2){//if cropType is badly formed it defaults to cc
@@ -375,21 +383,21 @@ class LiquenImg
 				}
 				$this->options['cropType']=str_split($this->options['cropType']);
 				if($currentAspectRatio >= $newAspectRatio){//src image is proportionaly wider than the target size
-					$this->width=$this->height*$newAspectRatio;
+					$this->configs['width']=$this->configs['height']*$newAspectRatio;
 				}else{
-					$this->height=$this->width/$newAspectRatio;
+					$this->configs['height']=$this->configs['width']/$newAspectRatio;
 				}
 				
 				if($this->options['cropType'][1]=='c'){//horizontal
-					if($currentAspectRatio >= $newAspectRatio)$this->srcX=floor(($srcWidth-$this->width)/2);
+					if($currentAspectRatio >= $newAspectRatio)$this->configs['srcX']=floor(($srcWidth-$this->configs['width'])/2);
 				}else if($this->options['cropType'][1]=='r'){
-					if($currentAspectRatio >= $newAspectRatio)$this->srcX=floor(($srcWidth-$this->width));
+					if($currentAspectRatio >= $newAspectRatio)$this->configs['srcX']=floor(($srcWidth-$this->configs['width']));
 				}
 
 				if($this->options['cropType'][0]=='c'){//vertical
-					if($currentAspectRatio < $newAspectRatio)$this->srcY=floor(($srcHeight-$this->height)/2);
+					if($currentAspectRatio < $newAspectRatio)$this->configs['srcY']=floor(($srcHeight-$this->configs['height'])/2);
 				}else if($this->options['cropType'][0]=='b'){
-					if($currentAspectRatio < $newAspectRatio)$this->srcY=floor(($srcHeight-$this->height));
+					if($currentAspectRatio < $newAspectRatio)$this->configs['srcY']=floor(($srcHeight-$this->configs['height']));
 				}
 			}else{//cropping disabled is assumed
 				if($currentAspectRatio >= $newAspectRatio){//src image is proportionaly wider than the target size
@@ -400,63 +408,64 @@ class LiquenImg
 			}
 		}
 		
-		if($this->cRectangle){
-			$this->srcX = $this->cRectangle->x;
-			$this->srcY = $this->cRectangle->y;
-			$this->width = $this->srcWidth = $this->cRectangle->width;
-			$this->height = $this->srcHeight = $this->cRectangle->height;
+		if($this->configs['cRectangle']){
+			$this->configs['srcX'] = $this->configs['cRectangle']->x;
+			$this->configs['srcY'] = $this->configs['cRectangle']->y;
+			$this->configs['width'] = $this->configs['srcWidth'] = $this->configs['cRectangle']->width;
+			$this->configs['height'] = $this->configs['srcHeight'] = $this->configs['cRectangle']->height;
 			//IF there's width set
 			if(  $this->options['width'] && !$this->options['height'] )
 			{
-				$this->endWidth = $this->options['width'];
-				$this->endHeight = ( $this->cRectangle->height * $this->endWidth ) / $this->width;
+				$this->configs['endWidth'] = $this->options['width'];
+				$this->configs['endHeight'] = ( $this->configs['cRectangle']->height * $this->configs['endWidth'] ) / $this->configs['width'];
 			}
 
 			//IF there's Height change
 			elseif(  $this->options['height'] && !$this->options['width'])
 			{
-				$this->endHeight = $this->options['height'];
-				$this->endWidth = ( $this->cRectangle->width * $this->endHeight ) / $this->height;
+				$this->configs['endHeight'] = $this->options['height'];
+				$this->configs['endWidth'] = ( $this->configs['cRectangle']->width * $this->configs['endHeight'] ) / $this->configs['height'];
 			}
 
 			//defines a limit for both width AND height without cropping
 			elseif( (  $this->options['height'] ) && (  $this->options['width'] ) )
 			{
-				$this->endWidth = $this->options['width'];
-				$this->endHeight = $this->options['height'];
+				$this->configs['endWidth'] = $this->options['width'];
+				$this->configs['endHeight'] = $this->options['height'];
 			}
 			
-			$this->dst_width = $this->endWidth;
-			$this->dst_height = $this->endHeight;
+			$this->configs['dst_width'] = $this->configs['endWidth'];
+			$this->configs['dst_height'] = $this->configs['endHeight'];
 			
 			if( (  $this->options['height'] ) && (  $this->options['width'] ) ){
 				$newAspectRatio = $this->options['width'] / $this->options['height'];
 				if( $newAspectRatio < $currentAspectRatio ){
-					$this->dst_width = $this->options['width'];
-					$this->dst_height = $this->dst_width / $currentAspectRatio;
+					$this->configs['dst_width'] = $this->options['width'];
+					$this->configs['dst_height'] = $this->configs['dst_width'] / $currentAspectRatio;
 				}else{
-					$this->dst_height = $this->options['height'];
-					$this->dst_width = $this->dst_height * $currentAspectRatio;
+					$this->configs['dst_height'] = $this->options['height'];
+					$this->configs['dst_width'] = $this->configs['dst_height'] * $currentAspectRatio;
 				}
-				/*$this->dst_width = $this->options['width'];
-				$this->dst_height = $this->options['height'];*/
+				/*$this->configs['dst_width'] = $this->options['width'];
+				$this->configs['dst_height'] = $this->options['height'];*/
 			}
 		}
 		$this->srcImage=$loadedImage;
+		//print_r($this);
 		$this->background=str_split(substr($this->options['backgroundColor'], 2),2);
 		if(count($this->background) < 4)$this->background[]='FF';
 	}
 
 	protected function processImage(){
-		$newImage = imagecreatetruecolor( $this->endWidth , $this->endHeight );
+		$newImage = imagecreatetruecolor( $this->configs['endWidth'] , $this->configs['endHeight'] );
 		imageinterlace( $newImage , $this->interlace );//activa o desactiva el bit de entrelazamiento con el segundo parámetro
 		$backgroundColor = imagecolorallocatealpha($newImage, hexdec($this->background[0]), hexdec($this->background[1]), hexdec($this->background[2]), (((~((int)hexdec($this->background[3]))) & 0xff) >> 1));//The fifth parameter of imagecolorallocatealpha is a 7bit integer // $alpha7 = ((~((int)$alpha8)) & 0xff) >> 1;// http://php.net/manual/es/function.imagecolorallocatealpha.php
 		imagefill($newImage, 0, 0, $backgroundColor);
-		imagecopyresampled( $newImage , $this->srcImage , $this->endX , $this->endY , $this->srcX , $this->srcY , $this->dst_width , $this->dst_height , $this->width , $this->height );
+		imagecopyresampled( $newImage , $this->srcImage , $this->configs['endX'] , $this->configs['endY'] , $this->configs['srcX'] , $this->configs['srcY'] , $this->configs['dst_width'] , $this->configs['dst_height'] , $this->configs['width'] , $this->configs['height'] );
 		
 		//header( "Content-Disposition: inline; filename=" . $name ); 
-		//header( "Content-type: image/jpeg");// . $this->extension );
-		switch( $this->extension )
+		//header( "Content-type: image/jpeg");// . $this->configs['extension'] );
+		switch( $this->configs['extension'] )
 		{
 			case 'jpg':
 				imagejpeg( $newImage , $this->cachedFile , $this->quality );

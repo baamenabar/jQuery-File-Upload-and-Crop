@@ -29,5 +29,16 @@ $newFile = $lii->genImage(array(
 	'ch' => floor($_POST['c']['h']*$sizeRatio)
 	));
 
+//$lii2 = new LiquenImg();
+$thumb = $lii->genImage(array(
+	'url' =>  $newFile,
+	'outputFolder' => 'thumbnails/',
+	'rename' => 'false',
+	'oc' => '1',
+	'width' => 80//,
+	//'height' => 60//,
+	//'crop' => false
+	));
+
 echo json_encode(array('newFile'=>$newFile));
 ?>

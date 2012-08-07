@@ -29,7 +29,7 @@ $(function () {
         )
     );
 
-    if (window.location.hostname === 'blueimp.github.com') {
+   /* if (window.location.hostname === 'blueimp.github.com') {
         // Demo settings:
         $('#fileupload').fileupload('option', {
             url: '//jquery-file-upload.appspot.com/',
@@ -63,18 +63,10 @@ $(function () {
                     .appendTo('#fileupload');
             });
         }
-    } else {
+    } else {//*/
         // Load existing files:
-        $('#fileupload').each(function () {
-            var that = this;
-            $.getJSON(this.action, function (result) {
-                if (result && result.length) {
-                    $(that).fileupload('option', 'done')
-                        .call(that, null, {result: result});
-                }
-            });
-        });
-    }
+        loadExistingFiles();
+    /*} //*/
 
     /***************** added by Agustín Amenabar *******************************/
     $('#modal-gallery').on('displayed', function () {
@@ -97,8 +89,9 @@ $(function () {
                 $cm.css(cssProperties[i],$('#modal-gallery').css(cssProperties[i]));
             };
              $cm.find('.modal-body').css('max-height','none');
-            $('#croppingModal').show().find('.close, .closeModal').click(function(){
-                $('#croppingModal').hide();
+            $('#croppingModal').modal('show').find('.close, .closeModal').click(function(eve){
+                eve.preventDefault();
+                $('#croppingModal').modal('hide');
             });
             $('#modal-gallery').modal('hide');
             
@@ -130,6 +123,7 @@ $(function () {
 
             $('#canvasToCrop').Jcrop(jcOptions);
             $('#btnDoCrop').click(function(eve){
+                eve.preventDefault();
                 $.post('server/php/image_crop_and_size.php',cropCoordinates,afterCropping)
             });
         });
@@ -138,7 +132,21 @@ $(function () {
 });
 
 function afterCropping(data,textStatus,jqXHR){
-    //
+    $('#croppingModal').modal('hide');
+    $('tbody.files').find('tr').remove();
+    loadExistingFiles();
+}
+
+function loadExistingFiles(){
+    $('#fileupload').each(function () {
+            var that = this;
+            $.getJSON(this.action, function (result) {
+                if (result && result.length) {
+                    $(that).fileupload('option', 'done')
+                        .call(that, null, {result: result});
+                }
+            });
+        });
 }
 
 /*

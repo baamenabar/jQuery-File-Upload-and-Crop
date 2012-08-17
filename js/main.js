@@ -74,10 +74,11 @@ $(function () {
         // modalData.$links is the list of (filtered) element nodes as jQuery object
         // modalData.img is the img (or canvas) element for the loaded image
         // modalData.options.index is the index of the current link
+        initZClip();
         $('#urlImage').css('vertical-align','top');
         $activeImage = $(modalData.img);
         $('#urlImage').val($activeImage.attr('src'));
-        
+
         $('#inWidthCrop').val($('#croppingModal').attr('data-width'));
         $('#inHeightCrop').val($('#croppingModal').attr('data-height'));
         
@@ -127,12 +128,44 @@ $(function () {
                 $.post('server/php/image_crop_and_size.php',cropCoordinates,afterCropping)
             });
         });
-        
-    });
-    $('a.modal-copy').zclip({
-            path:'js/ZeroClipboard.swf',
-            copy:function(){return $('#urlImage').val();}
+        $('#opCrop').find('button[type=reset]').click(function(){
+            enableStartResize(false);
         });
+        $('#inWidthCrop').change(function(){
+            if(!$(this).val() || $(this).val()=='0'){
+                enableStartResize(false);
+                $('#inHeightCrop').val('');
+                return;
+            }else{
+                enableStartResize(true);
+            }
+        });
+        $('#inHeightCrop').change(function(){
+            if(!$(this).val() || $(this).val()=='0'){
+                enableStartResize(false);
+                $('#inWidthCrop').val('');
+                return;
+            }else{
+                enableStartResize(true);
+            }
+        });
+        $('#startResize').click(function(){
+            var noSize=true;
+            var resizeData={ file:$activeImage.attr('src') };
+            if($('#inWidthCrop').val() && $('#inWidthCrop').val() != '0'){
+                resizeData.width=$('#inWidthCrop').val();
+                noSize=false;
+            }
+            if($('#inHeightCrop').val() && $('#inHeightCrop').val() != '0'){
+                resizeData.width=$('#inHeightCrop').val();
+                noSize=false;
+            }
+            if(noSize)return;//there's no width nor height defined to do the resize.
+            $('#startCrop, #startResize, #inWidthCrop, #inHeightCrop').attr('disabled','disabled');
+            $.post('server/php/image_crop_and_size.php',resizeData,afterResize);
+            
+        });
+    });
 });
 
 function afterCropping(data,textStatus,jqXHR){
@@ -141,7 +174,15 @@ function afterCropping(data,textStatus,jqXHR){
     loadExistingFiles();
 }
 
+function afterResize(data,textStatus,jqXHR){
+    $('#modal-gallery').modal('hide');
+    $('#startCrop, #startResize, #inWidthCrop, #inHeightCrop').removeAttr('disabled');
+    $('tbody.files').find('tr').remove();
+    loadExistingFiles();
+}
+
 function loadExistingFiles(){
+    result=null;
     $('#fileupload').each(function () {
             var that = this;
             $.getJSON(this.action, function (result) {
@@ -153,6 +194,25 @@ function loadExistingFiles(){
         });
 }
 
+var zclipInitialized = false;
+function initZClip(){
+    if(zclipInitialized)return;
+    $('a.modal-copy').zclip({
+            path:'js/ZeroClipboard.swf',
+            copy:function(){return $('#urlImage').val();}
+        });
+    zclipInitialized=true;
+}
+
+function enableStartResize(activar){
+    $targ=$('#startResize');
+    if(activar){
+        $targ.removeAttr('disabled');
+    }else{
+        $targ.attr('disabled','disabled');
+    }
+    
+}
 /*
  * Special event for image load events
  * Needed because some browsers does not trigger the event on cached images.

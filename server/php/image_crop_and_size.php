@@ -11,9 +11,29 @@ echo '
 <br>dire: '.substr( $upload_handler->getOption('relative_upload_dir'). urldecode(array_pop(array_splice(explode('/','http://localhost/jQuery-File-Upload-and-Crop/server/php/files/DSC02004%20-%20agaricus%20arvensis.JPG'),-1))),1).'
 <br>isfile:'.is_file( substr( $upload_handler->getOption('relative_upload_dir'). urldecode(array_pop(array_splice(explode('/','http://localhost/jQuery-File-Upload-and-Crop/server/php/files/DSC02004%20-%20agaricus%20arvensis.JPG'),-1))),1) ).'
 <br>';*/
+if(isset($_POST['source'])){
+	$thePicture = substr( $upload_handler->getOption('relative_upload_dir'). urldecode(array_pop(array_splice(explode('/',$_POST['source']['file']),-1))),1);
+}else{
+	$thePicture = substr( $upload_handler->getOption('relative_upload_dir'). urldecode(array_pop(array_splice(explode('/',$_POST['file']),-1))),1);
+	$_POST['url']=$thePicture;
+}
 
-$thePicture = substr( $upload_handler->getOption('relative_upload_dir'). urldecode(array_pop(array_splice(explode('/',$_POST['source']['file']),-1))),1);
-if (!is_file($thePicture)) echo 'ERROR: Image file not found';
+if (!is_file($thePicture)) exit('ERROR: Source image file not found');
+
+if(!isset($_POST['source'])){
+	$newFile = $lii->genImage($_POST);
+
+	$thumb = $lii->genImage(array(
+	'url' =>  $newFile,
+	'outputFolder' => 'thumbnails/',
+	'rename' => 'false',
+	'oc' => '1',
+	'width' => 80
+	));
+
+	echo json_encode(array('newFile'=>$newFile));
+	exit();
+}
 
 $size=getimagesize($thePicture);
 $sizeRatio=$size[0]/$_POST['source']['width'];

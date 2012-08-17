@@ -1,0 +1,13 @@
+/*jquery.furac.ui.css*/
+#opCrop{
+border-bottom: 1px solid #CCC;
+	margin-bottom: 8px;
+}
+#opCrop .btn{vertical-align: baseline;}
+
+#opCrop label{display: inline;vertical-align: baseline;}
+#opCrop input[type="number"]{
+	min-width: 0;
+	width:50px;
+	vertical-align: baseline;}
+	

@@ -69,7 +69,7 @@ $(function () {
     /*} //*/
 
     /***************** added by Agustín Amenabar *******************************/
-    $('#modal-gallery').on('displayed', function () {
+     $('#modal-gallery').on('displayed', function () {
         var modalData = $(this).data('modal');
         // modalData.$links is the list of (filtered) element nodes as jQuery object
         // modalData.img is the img (or canvas) element for the loaded image
@@ -77,10 +77,10 @@ $(function () {
         $('#urlImage').css('vertical-align','top');
         $activeImage = $(modalData.img);
         $('#urlImage').val($activeImage.attr('src'));
-        $('a.modal-copy').zclip({
-            path:'js/ZeroClipboard.swf',
-            copy:function(){return $('#urlImage').val();}
-        });
+        
+        $('#inWidthCrop').val($('#croppingModal').attr('data-width'));
+        $('#inHeightCrop').val($('#croppingModal').attr('data-height'));
+        
         $('#startCrop').click(function(eve){
             eve.preventDefault();
             var $cm = $('#croppingModal');
@@ -105,16 +105,16 @@ $(function () {
             canContext.drawImage($activeImage[0],0,0,picWidth,picHeight);
 
             var jcOptions = {};
-            if($cm.attr('data-width') && $cm.attr('data-height')){
-                jcOptions.aspectRatio=$cm.attr('data-width') / $cm.attr('data-height');
-                $('#croppingModal').find('h3 .dimentions').text('to '+$cm.attr('data-width') + ' x ' + $cm.attr('data-height') + ' px');
+            if($('#inWidthCrop').val() && $('#inHeightCrop').val()){
+                jcOptions.aspectRatio=$('#inWidthCrop').val() / $('#inHeightCrop').val();
+                $('#croppingModal').find('h3 .dimentions').text('to '+$('#inWidthCrop').val() + ' x ' + $('#inHeightCrop').val() + ' px');
             }
 
             cropCoordinates.source = {
                 width:picWidth,
                 height:picHeight,
-                endWidth:$cm.attr('data-width'),
-                endHeight:$cm.attr('data-height'),
+                endWidth:$('#inWidthCrop').val(),
+                endHeight:$('#inHeightCrop').val(),
                 file:$activeImage.attr('src')
             };
             jcOptions.onSelect = function(c){
@@ -129,6 +129,10 @@ $(function () {
         });
         
     });
+    $('a.modal-copy').zclip({
+            path:'js/ZeroClipboard.swf',
+            copy:function(){return $('#urlImage').val();}
+        });
 });
 
 function afterCropping(data,textStatus,jqXHR){

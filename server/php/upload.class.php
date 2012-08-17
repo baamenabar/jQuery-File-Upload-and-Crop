@@ -78,6 +78,16 @@ class UploadHandler
     		substr($_SERVER['SCRIPT_NAME'],0, strrpos($_SERVER['SCRIPT_NAME'], '/'));
     }
 
+    protected function getRootUrl() {
+        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        return
+            ($https ? 'https://' : 'http://').
+            (!empty($_SERVER['REMOTE_USER']) ? $_SERVER['REMOTE_USER'].'@' : '').
+            (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : ($_SERVER['SERVER_NAME'].
+            ($https && $_SERVER['SERVER_PORT'] === 443 ||
+            $_SERVER['SERVER_PORT'] === 80 ? '' : ':'.$_SERVER['SERVER_PORT']))).'/';
+    }
+
     protected function set_file_delete_url($file) {
         $file->delete_url = $this->options['script_url']
             .'?file='.rawurlencode($file->name);

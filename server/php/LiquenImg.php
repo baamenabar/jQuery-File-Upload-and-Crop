@@ -451,7 +451,6 @@ class LiquenImg
 			}
 		}
 		$this->srcImage=$loadedImage;
-		//print_r($this);
 		$this->background=str_split(substr($this->options['backgroundColor'], 2),2);
 		if(count($this->background) < 4)$this->background[]='FF';
 	}

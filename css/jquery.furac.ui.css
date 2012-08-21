@@ -9,5 +9,8 @@ border-bottom: 1px solid #CCC;
 #opCrop input[type="number"]{
 	min-width: 0;
 	width:50px;
-	vertical-align: baseline;}
-	
+	vertical-align: baseline;
+}
+.modal-body{
+	overflow-y: hidden;
+}	

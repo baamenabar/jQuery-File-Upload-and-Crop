@@ -13,7 +13,7 @@
 class UploadHandler
 {
     protected $options;
-    protected $_relative_upload_dir = '/files/';
+    protected $_relative_upload_dir = '/files/';//has to start with a slash AND is relative to this directory
 
     function __construct($options=null) {
         $this->options = array(

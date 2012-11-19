@@ -123,10 +123,6 @@ $(function () {
             };
 
             $('#canvasToCrop').Jcrop(jcOptions);
-            $('#btnDoCrop').click(function(eve){
-                eve.preventDefault();
-                $.post('server/php/image_crop_and_size.php',cropCoordinates,afterCropping)
-            });
         });
         $('#opCrop').find('button[type=reset]').click(function(){
             enableStartResize(false);
@@ -149,22 +145,26 @@ $(function () {
                 enableStartResize(true);
             }
         });
-        $('#startResize').click(function(){
-            var noSize=true;
-            var resizeData={ file:$activeImage.attr('src') };
-            if($('#inWidthCrop').val() && $('#inWidthCrop').val() != '0'){
-                resizeData.width=$('#inWidthCrop').val();
-                noSize=false;
-            }
-            if($('#inHeightCrop').val() && $('#inHeightCrop').val() != '0'){
-                resizeData.height=$('#inHeightCrop').val();
-                noSize=false;
-            }
-            if(noSize)return;//there's no width nor height defined to do the resize.
-            $('#startCrop, #startResize, #inWidthCrop, #inHeightCrop').attr('disabled','disabled');
-            $.post('server/php/image_crop_and_size.php',resizeData,afterResize);
-            
-        });
+    });
+    $('#btnDoCrop').click(function(eve){
+        eve.preventDefault();
+        $.post('server/php/image_crop_and_size.php',cropCoordinates,afterCropping)
+    });
+    $('#startResize').click(function(){
+        var noSize=true;
+        var resizeData={ file:$activeImage.attr('src') };
+        if($('#inWidthCrop').val() && $('#inWidthCrop').val() != '0'){
+            resizeData.width=$('#inWidthCrop').val();
+            noSize=false;
+        }
+        if($('#inHeightCrop').val() && $('#inHeightCrop').val() != '0'){
+            resizeData.height=$('#inHeightCrop').val();
+            noSize=false;
+        }
+        if(noSize)return;//there's no width nor height defined to do the resize.
+        $('#startCrop, #startResize, #inWidthCrop, #inHeightCrop').attr('disabled','disabled');
+        $.post('server/php/image_crop_and_size.php',resizeData,afterResize);
+        
     });
 });
 

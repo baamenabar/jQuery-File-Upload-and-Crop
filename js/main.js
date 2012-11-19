@@ -157,7 +157,7 @@ $(function () {
                 noSize=false;
             }
             if($('#inHeightCrop').val() && $('#inHeightCrop').val() != '0'){
-                resizeData.width=$('#inHeightCrop').val();
+                resizeData.height=$('#inHeightCrop').val();
                 noSize=false;
             }
             if(noSize)return;//there's no width nor height defined to do the resize.

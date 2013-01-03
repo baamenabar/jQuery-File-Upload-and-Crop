@@ -1,3 +1,6 @@
 .DS_Store
 node_modules
 assets/
+server/php/files/
+server/php/thumbnails/
+x3.php

@@ -197,6 +197,11 @@ class UploadHandler
             $file->error = 'acceptFileTypes';
             return false;
         }
+        //DEACTIVATE THIS IS YOU WANT TO UPLOAD THINGS OTHER THAN IMAGES
+        if(!@exif_imagetype($uploaded_file)){
+            $file->error = 'acceptFileTypes';
+            return false;
+        }
         if ($uploaded_file && is_uploaded_file($uploaded_file)) {
             $file_size = filesize($uploaded_file);
         } else {

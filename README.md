@@ -1,8 +1,6 @@
 # jQuery File Upload, Resize and Crop Plugin
 Modified by Agustín Amenabar 
 
-__Modified == Hacked__
-
 ## Demo
 [Demo File Upload, Resize and Crop](http://g.m0.cl/crop/)
 

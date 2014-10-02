@@ -1,9 +1,6 @@
 # jQuery File Upload, Resize and Crop Plugin
 Modified by Agustín Amenabar 
 
-## Demo
-[Demo File Upload, Resize and Crop](http://g.m0.cl/crop/)
-
 ## Setup instructions
 * [How to setup the plugin on your website](https://github.com/blueimp/jQuery-File-Upload/wiki/Setup)
 * [How to use only the basic plugin (minimal setup guide).](https://github.com/blueimp/jQuery-File-Upload/wiki/Basic-plugin)
